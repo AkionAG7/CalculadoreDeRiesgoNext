@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Save, X, AlertCircle, CheckCircle } from 'lucide-react'
 import { ImpactLevel, ProbabilityLevel, RiskMatrix } from '@/types/risk'
-
+import '../app/globals.css'
 interface RiskFormProps {
   onSubmit: (data: {
     description: string
