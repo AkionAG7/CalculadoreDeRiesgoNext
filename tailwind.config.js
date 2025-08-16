@@ -1,8 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./app/**/*.{js,ts,jsx,tsx,mdx}", // cubre app, layout, page y subcarpetas
-    "./types/**/*.{js,ts,jsx,tsx,mdx}", // si usas tsx en types (opcional)
+    "./app/**/*.{js,ts,jsx,tsx,mdx}", // cubre layout, page y todos los componentes
   ],
   theme: {
     extend: {
@@ -17,4 +16,4 @@ module.exports = {
     },
   },
   plugins: [],
-};
+}
