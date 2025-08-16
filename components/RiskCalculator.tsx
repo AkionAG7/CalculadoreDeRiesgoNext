@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Save, AlertTriangle, Shield, FileText } from 'lucide-react'
 import { Risk, ImpactLevel, ProbabilityLevel, RiskLevel, RiskMatrix } from '@/types/risk'
 import RiskMatrixComponent from './RiskMatrix'
-
+import RiskForm from './RiskForm'
 import RiskList from './RiskList'
 
 const RiskCalculator = () => {
@@ -117,7 +117,13 @@ const RiskCalculator = () => {
       </div>
 
       {/* Formulario de riesgo */}
-    
+      {showForm && (
+        <RiskForm 
+          onSubmit={addRisk}
+          onCancel={() => setShowForm(false)}
+          riskMatrix={riskMatrix}
+        />
+      )}
 
       {/* Matriz de riesgo */}
       <div className="bg-white rounded-lg shadow-lg p-6">
