@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Calculadora de Riesgos - CalNext',
+  title: 'Calculadora de Riesgo - CalNext',
   description: 'Sistema completo de gestión y cálculo de riesgos empresariales',
 }
 
