@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .risk-cell {
+    @apply border border-gray-300 p-2 text-center text-sm font-medium;
+  }
+  
+  .risk-low {
+    @apply bg-risk-low text-white;
+  }
+  
+  .risk-medium {
+    @apply bg-risk-medium text-white;
+  }
+  
+  .risk-high {
+    @apply bg-risk-high text-white;
+  }
+  
+  .risk-critical {
+    @apply bg-risk-critical text-white;
+  }
+}
