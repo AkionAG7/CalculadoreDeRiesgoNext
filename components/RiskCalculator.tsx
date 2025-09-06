@@ -6,6 +6,7 @@ import { Risk, ImpactLevel, ProbabilityLevel, RiskLevel, RiskMatrix } from '@/ty
 import RiskMatrixComponent from './RiskMatrix'
 import RiskForm from './RiskForm'
 import RiskList from './RiskList'
+import { trackRiskOperation, trackRiskCalculation, trackUserAction, setRiskContext } from '@/utils/sentry'
 
 const RiskCalculator = () => {
   const [risks, setRisks] = useState<Risk[]>([])
@@ -51,32 +52,71 @@ const RiskCalculator = () => {
   }
 
   const calculateRiskLevel = (impact: ImpactLevel, probability: ProbabilityLevel): RiskLevel => {
-    return riskMatrix[probability]?.[impact] || 'Medio'
+    const startTime = performance.now()
+    const result = riskMatrix[probability]?.[impact] || 'Medio'
+    const duration = performance.now() - startTime
+    
+    // Track risk calculation performance
+    trackRiskCalculation(impact, probability, result, duration)
+    
+    return result
   }
 
   const addRisk = (riskData: Omit<Risk, 'id' | 'riskLevel' | 'createdAt' | 'updatedAt'>) => {
-    const newRisk: Risk = {
-      ...riskData,
-      id: Date.now().toString(),
-      riskLevel: calculateRiskLevel(riskData.impact, riskData.probability),
-      createdAt: new Date(),
-      updatedAt: new Date()
+    try {
+      const newRisk: Risk = {
+        ...riskData,
+        id: Date.now().toString(),
+        riskLevel: calculateRiskLevel(riskData.impact, riskData.probability),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      setRisks(prev => [newRisk, ...prev])
+      setShowForm(false)
+      
+      // Track successful risk creation
+      trackRiskOperation('create', newRisk)
+      trackUserAction('risk_created', { riskId: newRisk.id, riskLevel: newRisk.riskLevel })
+    } catch (error) {
+      // Track error in risk creation
+      trackRiskOperation('create', riskData, error as Error)
+      throw error
     }
-    
-    setRisks(prev => [newRisk, ...prev])
-    setShowForm(false)
   }
 
   const deleteRisk = (id: string) => {
-    setRisks(prev => prev.filter(risk => risk.id !== id))
+    try {
+      const riskToDelete = risks.find(risk => risk.id === id)
+      setRisks(prev => prev.filter(risk => risk.id !== id))
+      
+      // Track successful risk deletion
+      trackRiskOperation('delete', riskToDelete)
+      trackUserAction('risk_deleted', { riskId: id })
+    } catch (error) {
+      // Track error in risk deletion
+      trackRiskOperation('delete', { id }, error as Error)
+      throw error
+    }
   }
 
   const updateRisk = (id: string, updatedData: Partial<Risk>) => {
-    setRisks(prev => prev.map(risk => 
-      risk.id === id 
-        ? { ...risk, ...updatedData, updatedAt: new Date() }
-        : risk
-    ))
+    try {
+      const originalRisk = risks.find(risk => risk.id === id)
+      setRisks(prev => prev.map(risk => 
+        risk.id === id 
+          ? { ...risk, ...updatedData, updatedAt: new Date() }
+          : risk
+      ))
+      
+      // Track successful risk update
+      trackRiskOperation('update', { id, originalRisk, updatedData })
+      trackUserAction('risk_updated', { riskId: id, updatedFields: Object.keys(updatedData) })
+    } catch (error) {
+      // Track error in risk update
+      trackRiskOperation('update', { id, updatedData }, error as Error)
+      throw error
+    }
   }
 
   // Cargar riesgos desde localStorage al inicializar
@@ -92,15 +132,33 @@ const RiskCalculator = () => {
           updatedAt: new Date(risk.updatedAt)
         }))
         setRisks(risksWithDates)
+        
+        // Track successful data loading
+        trackUserAction('risks_loaded_from_storage', { count: risksWithDates.length })
       } catch (error) {
         console.error('Error loading risks from localStorage:', error)
+        // Track error in data loading
+        trackRiskOperation('calculate', { source: 'localStorage' }, error as Error)
       }
     }
   }, [])
 
   // Guardar riesgos en localStorage cuando cambien
   useEffect(() => {
-    localStorage.setItem('risks', JSON.stringify(risks))
+    try {
+      localStorage.setItem('risks', JSON.stringify(risks))
+      // Track successful data saving
+      trackUserAction('risks_saved_to_storage', { count: risks.length })
+    } catch (error) {
+      console.error('Error saving risks to localStorage:', error)
+      // Track error in data saving
+      trackRiskOperation('calculate', { destination: 'localStorage' }, error as Error)
+    }
+  }, [risks])
+
+  // Set risk context for Sentry
+  useEffect(() => {
+    setRiskContext(risks.length, risks.length > 0 ? risks[0].createdAt : undefined)
   }, [risks])
 
   return (
@@ -108,7 +166,10 @@ const RiskCalculator = () => {
       {/* Botón para agregar nuevo riesgo */}
       <div className="flex justify-center">
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setShowForm(true)
+            trackUserAction('show_form_button_clicked')
+          }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
         >
           <Plus className="w-5 h-5" />
