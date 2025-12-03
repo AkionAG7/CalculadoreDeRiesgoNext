@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@sentry/nextjs": "^10.8.0",
-    "autoprefixer": "^10.0.1",
+    "autoprefixer": "^10.4.22",
     "lucide-react": "^0.294.0",
     "next": "14.2.7",
     "postcss": "^8",
